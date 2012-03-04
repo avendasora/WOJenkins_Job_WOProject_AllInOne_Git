@@ -1,19 +1,38 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <project>
   <actions/>
-  <description>&lt;p&gt;This project will build WebObjects projects (both Frameworks and Applications) that are based on Project Wonder. &#xd;
-You can specify the version of Apple WebObjects™ to use, the repository and branch for your project and the repository and branch&#xd;
-  for Project Wonder.&lt;/p&gt; &#xd;
-  &#xd;
-&lt;p&gt;You can also specify you want a &lt;b&gt;Test Build&lt;/b&gt; (no embedded frameworks) or a &lt;b&gt;Deployment Build&lt;/b&gt; (fully &#xd;
-  embedded WebObjects and Project Wonder Frameworks)&#xd;
-&#xd;
-&lt;p&gt;You can use this project as a template for your own projects, or simply specify the parameters at runtime.&#xd;
-  &#xd;
-  &lt;p&gt;&lt;b&gt;NOTE:&lt;/b&gt; this project is meant to work in tandem with the &#xd;
-    &lt;a href=&quot;https://github.com/avendasora/WOJenkins_Job_InstallWOAndWOnder&quot;&gt;InstallWOAndWOnder&lt;/a&gt; Jenkins job. &#xd;
-    That job will take care of downloading and installing WebObjects™ and cloning, building and installing Project WOnder&#xd;
-    so that they are available for this job to use.</description>
+  <description>This project will build a WebObjects Application and any frameworks that you specify as one Jenkins job instead of &#xd;
+you needing to create one job for each framework and/or application.&#xd;
+&lt;h3&gt;Customizing Job Configuration&lt;/h3&gt;&#xd;
+You will need to modify the Job configuration clicking on &lt;a href=&quot;configure&quot;&gt;Configure&lt;/a&gt; and setting the following:&#xd;
+&lt;ul&gt;&#xd;
+  &lt;li&gt;&#xd;
+    &lt;h4&gt;SCM&lt;/h4&gt;&#xd;
+    You will need to specify one or more Git repositories to pull your projects from. &lt;em&gt;Note:&lt;/em&gt; If your Application and Frameworks &#xd;
+    are in one Repository, this job assumes that they are at the same level in the directory hierarchy. If they are not &#xd;
+    you will need to make modifications to both this job and the setupWonderProjectWorkspace.sh script that this job calls.&#xd;
+  &lt;/li&gt;&#xd;
+  &lt;li&gt;&#xd;
+    &lt;h4&gt;Build Tasks&lt;/h4&gt;&#xd;
+    You will need to specify one Ant task per WebObjects Framework and Application, in dependency order, that this job needs to build.&#xd;
+  &lt;/li&gt;&#xd;
+&lt;/ul&gt;&#xd;
+&lt;h3&gt;Runtime Parameters&lt;/h3&gt;&#xd;
+Without changing the job configuration, you can:&#xd;
+&lt;ul&gt;&#xd;
+  &lt;li&gt;Specify a custom &quot;Deployment Name&quot; for you Application&lt;/li&gt;&#xd;
+  &lt;li&gt;Specify the version of Apple WebObjects™ to build against&lt;/li&gt;&#xd;
+  &lt;li&gt;Specify the branch of Project Wonder.&lt;/li&gt;&#xd;
+  &lt;li&gt;Specify if the build is for testing or deployment:&lt;/li&gt;&#xd;
+    &lt;ol&gt;&#xd;
+      &lt;li&gt;&lt;b&gt;Test Build&lt;/b&gt; (no embedded frameworks)&lt;/li&gt;&#xd;
+      &lt;li&gt;&lt;b&gt;Deployment Build&lt;/b&gt; (fully embedded System and Local frameworks)&lt;/li&gt;&#xd;
+    &lt;/ol&gt;&#xd;
+&lt;/ul&gt;&#xd;
+&lt;b&gt;NOTE:&lt;/b&gt; this project is intended to work in tandem with the &#xd;
+&lt;a href=&quot;https://github.com/avendasora/WOJenkins_Job_InstallWOAndWOnder&quot;&gt;InstallWOAndWOnder&lt;/a&gt; Jenkins job. &#xd;
+InstallWOAndWOnder will take care of downloading and installing WebObjects™ and cloning, building and installing Project WOnder&#xd;
+in the JENKINS_HOME/WOFrameworksRepository so that they are available for this job to use.</description>
   <logRotator>
     <daysToKeep>-1</daysToKeep>
     <numToKeep>3</numToKeep>
@@ -26,27 +45,20 @@ You can specify the version of Apple WebObjects™ to use, the repository and br
       <parameterDefinitions>
         <hudson.model.StringParameterDefinition>
           <name>PROJECT_NAME</name>
-          <description>What is the name of the WOFramework or WOApplication project in the repository that you want to build?</description>
-          <defaultValue>SimpleBlogLogic</defaultValue>
+          <description>This is the name of the directory that contains the WebObjects application project that you want to build, i.e., the directory that contains the Sources, Components and Resources subdirectories). To specify frameworks that this application depends upon and should be built as part of this job then you will need to add additional Ant Tasks. Depending on your source code repository structure you may also need to add additional SCM to check them out into the &quot;Projects&quot; directory as well.</description>
+          <defaultValue>SimpleBlog</defaultValue>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>DEPLOYED_APPLICATION_NAME</name>
-          <description>&lt;b&gt;**OPTIONAL**&lt;/b&gt; this setting allows you to specify a different name for an Application when it is built. Technically, it overrides the value in the project&apos;s build.properties file. If you leave it blank, it will simply use the PROJECT_NAME value, which should match the name in the build.properties file.</description>
-          <defaultValue></defaultValue>
-        </hudson.model.StringParameterDefinition>
-        <hudson.model.StringParameterDefinition>
-          <name>PROJECT_GIT_REPOSITORY</name>
-          <description>The Git repository that holds the project you want to build.</description>
-          <defaultValue>https://github.com/daveeed/SimpleBlog.git</defaultValue>
-        </hudson.model.StringParameterDefinition>
-        <hudson.model.StringParameterDefinition>
-          <name>PROJECT_GIT_REFERENCE</name>
-          <description></description>
-          <defaultValue>master</defaultValue>
+          <description>This setting allows you to specify a different name for an Application when it is built. You &lt;b&gt;must&lt;/b&gt; specify a value, even if it is the same as the PROJECT_NAME parameter above.</description>
+          <defaultValue>SimpleBlog</defaultValue>
         </hudson.model.StringParameterDefinition>
         <hudson.model.ChoiceParameterDefinition>
           <name>BUILD_TYPE</name>
-          <description>Test Build will only link to frameworks (fast). Deployment will obey the Deployment settings defined in WOLips.</description>
+          <description>&lt;ul&gt;
+&lt;li&gt;&lt;b&gt;Test Build&lt;/b&gt; will override the settings defined in WOLips and will not embed any frameworks in the built application, it will only link to them.&lt;/li&gt;
+&lt;li&gt;&lt;b&gt;Deployment&lt;/b&gt; will obey the Deployment settings you defined for the project in WOLips, which should almost certainly be to embed both System and Local frameworks.&lt;/li&gt;
+&lt;/ul&gt;</description>
           <choices class="java.util.Arrays$ArrayList">
             <a class="string-array">
               <string>Test Build</string>
@@ -56,7 +68,7 @@ You can specify the version of Apple WebObjects™ to use, the repository and br
         </hudson.model.ChoiceParameterDefinition>
         <hudson.model.ChoiceParameterDefinition>
           <name>WO_VERSION</name>
-          <description></description>
+          <description>This is the version of Apple™ WebObjects that you want to build against. It must have been already downloaded and installed in Jenkin&apos;s WOFrameworksRepository (JENKINS_HOME/WOFrameworkRepository). The easiest way to do this is by cloning and running the &lt;a href=&quot;https://github.com/avendasora/WOJenkins_Job_InstallWOAndWOnder&quot;&gt;InstallWOAndWOnder&lt;/a&gt; Jenkins job.</description>
           <choices class="java.util.Arrays$ArrayList">
             <a class="string-array">
               <string>5.4.3</string>
@@ -66,7 +78,7 @@ You can specify the version of Apple WebObjects™ to use, the repository and br
         </hudson.model.ChoiceParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>WONDER_GIT_REFERENCE</name>
-          <description>The Git branch or tag of Wonder that you want to build against. In Git terms it will be &quot;refs/WONDER_GIT_REFERENCE_TYPE/WONDER_GIT_REFERENCE&quot;. &lt;b&gt;master&lt;/b&gt; is the default, but valid options could be &lt;b&gt;*&lt;/b&gt; or &lt;b&gt;MyBranch&lt;/b&gt;</description>
+          <description>This is the branch of Wonder that you want to build against. This branch of Project WOnder must have been already built and installed in Jenkin&apos;s WOFrameworksRepository. The easiest way to do this is by cloning and running the &lt;a href=&quot;https://github.com/avendasora/WOJenkins_Job_InstallWOAndWOnder&quot;&gt;InstallWOAndWOnder&lt;/a&gt; Jenkins job.</description>
           <defaultValue>master</defaultValue>
         </hudson.model.StringParameterDefinition>
         <hudson.model.ChoiceParameterDefinition>
@@ -92,14 +104,15 @@ You can specify the version of Apple WebObjects™ to use, the repository and br
           <hudson.plugins.git.UserRemoteConfig>
             <name>origin</name>
             <refspec>+refs/heads/*:refs/remotes/origin/*</refspec>
-            <url>${PROJECT_GIT_REPOSITORY}</url>
+            <url>https://github.com/daveeed/SimpleBlog.git</url>
           </hudson.plugins.git.UserRemoteConfig>
         </userRemoteConfigs>
         <branches>
           <hudson.plugins.git.BranchSpec>
-            <name>${PROJECT_GIT_REFERENCE}</name>
+            <name>master</name>
           </hudson.plugins.git.BranchSpec>
         </branches>
+        <disableSubmodules>false</disableSubmodules>
         <recursiveSubmodules>false</recursiveSubmodules>
         <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
         <authorOrCommitter>false</authorOrCommitter>
@@ -111,6 +124,7 @@ You can specify the version of Apple WebObjects™ to use, the repository and br
         <gitTool>Default</gitTool>
         <submoduleCfg class="list"/>
         <relativeTargetDir>Projects</relativeTargetDir>
+        <reference></reference>
         <excludedRegions></excludedRegions>
         <excludedUsers></excludedUsers>
         <gitConfigName></gitConfigName>
@@ -132,6 +146,7 @@ You can specify the version of Apple WebObjects™ to use, the repository and br
             <name>master</name>
           </hudson.plugins.git.BranchSpec>
         </branches>
+        <disableSubmodules>false</disableSubmodules>
         <recursiveSubmodules>false</recursiveSubmodules>
         <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
         <authorOrCommitter>false</authorOrCommitter>
@@ -143,6 +158,7 @@ You can specify the version of Apple WebObjects™ to use, the repository and br
         <gitTool>Default</gitTool>
         <submoduleCfg class="list"/>
         <relativeTargetDir>WOJenkins</relativeTargetDir>
+        <reference></reference>
         <excludedRegions></excludedRegions>
         <excludedUsers></excludedUsers>
         <gitConfigName></gitConfigName>
@@ -164,8 +180,14 @@ You can specify the version of Apple WebObjects™ to use, the repository and br
     </hudson.tasks.Shell>
     <hudson.tasks.Ant>
       <targets>build -verbose -propertyfile ${WORKSPACE}/Root/jenkins.build.properties -lib ${WORKSPACE}/Root/lib/woproject.jar</targets>
+      <buildFile>Projects/SimpleBlogLogic/build.xml</buildFile>
+      <properties>Projects/SimpleBlogLogic/</properties>
+    </hudson.tasks.Ant>
+    <hudson.tasks.Ant>
+      <targets>build -verbose -propertyfile ${WORKSPACE}/Root/jenkins.build.properties -lib ${WORKSPACE}/Root/lib/woproject.jar</targets>
       <buildFile>Projects/${PROJECT_NAME}/build.xml</buildFile>
-      <properties>Projects/${PROJECT_NAME}/</properties>
+      <properties>Projects/${PROJECT_NAME}/
+project.name=${DEPLOYED_APPLICATION_NAME}</properties>
     </hudson.tasks.Ant>
   </builders>
   <publishers>
